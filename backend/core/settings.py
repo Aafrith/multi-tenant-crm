@@ -148,3 +148,9 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
 }
 
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_KEY")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_BUCKET")
+AWS_S3_REGION_NAME = "ap-south-1"
