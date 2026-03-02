@@ -154,3 +154,9 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_KEY")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_BUCKET")
 AWS_S3_REGION_NAME = "ap-south-1"
+
+MIDDLEWARE.insert(0,"corsheaders.middleware.CorsMiddleware")
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173"
+]
