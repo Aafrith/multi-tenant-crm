@@ -3,7 +3,7 @@ from .views import *
 
 router = DefaultRouter()
 
-router.register("companies", CompanyViewSet)
-router.register("contacts", ContactViewSet)
+router.register("companies", CompanyViewSet, basename="company")
+router.register("contacts", ContactViewSet, basename="contact")
 
 urlpatterns = router.urls
