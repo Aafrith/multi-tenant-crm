@@ -148,15 +148,27 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
 }
 
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_KEY")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_BUCKET")
-AWS_S3_REGION_NAME = "ap-south-1"
+AWS_S3_REGION_NAME = os.getenv("AWS_REGION")
+AWS_QUERYSTRING_AUTH = False
 
 MIDDLEWARE.insert(0,"corsheaders.middleware.CorsMiddleware")
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173"
 ]
+
+MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
+

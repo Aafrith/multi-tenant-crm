@@ -47,7 +47,11 @@ class Company(models.Model):
     industry = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
 
-    logo = models.ImageField(upload_to="logos/", null=True, blank=True)
+    logo = models.ImageField(
+        upload_to="company_logos/",
+        null=True,
+        blank=True
+    )
 
     is_deleted = models.BooleanField(default=False)
 
