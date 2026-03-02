@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "crm",
     "corsheaders",
     "storages",
+    "crm.apps.CrmConfig"
 ]
 
 MIDDLEWARE = [
