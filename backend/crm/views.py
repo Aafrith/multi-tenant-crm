@@ -6,6 +6,8 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import Company, Contact, ActivityLog
 from .serializers import (
@@ -15,6 +17,34 @@ from .serializers import (
     UserSerializer,
 )
 from .permissions import IsAdmin, IsManagerOrAdmin
+
+
+# ---------------------------------------------------------------------------
+# Custom JWT — embeds role, org_id and username into the token payload so the
+# frontend can read them instantly without a separate /me/ round-trip.
+# ---------------------------------------------------------------------------
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["username"]     = user.username
+        token["role"]         = user.role
+        token["org_id"]       = user.organization_id
+        token["org_name"]     = user.organization.name if user.organization else None
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Also return user info in the response body for convenience
+        data["username"] = self.user.username
+        data["role"]     = self.user.role
+        data["org_name"] = self.user.organization.name if self.user.organization else None
+        return data
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 def log_action(user, action, instance):

@@ -16,10 +16,10 @@ const NAV_ITEMS = [
 ];
 
 export default function Navbar() {
-  const { logout, profile } = useContext(AuthContext);
+  const { logout, profile, role } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const roleBadge = ROLE_BADGE[profile?.role] || ROLE_BADGE.STAFF;
+  const roleBadge = ROLE_BADGE[role] || ROLE_BADGE.STAFF;
   const initials = (profile?.first_name?.[0] || profile?.username?.[0] || "U").toUpperCase();
 
   const handleLogout = () => { logout(); navigate("/login"); };

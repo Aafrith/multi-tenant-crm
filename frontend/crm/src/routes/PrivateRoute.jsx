@@ -7,8 +7,14 @@ export default function PrivateRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#f8fafc",
+      }}>
+        <span className="spinner" style={{ width: 40, height: 40, color: "#4f46e5" }} />
       </div>
     );
   }

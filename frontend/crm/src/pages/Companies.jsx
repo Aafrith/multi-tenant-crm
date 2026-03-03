@@ -33,7 +33,7 @@ function FormField({ label, children, error }) {
 
 
 export default function Companies() {
-  const { profile } = useContext(AuthContext);
+  const { profile, role } = useContext(AuthContext);
   const [companies, setCompanies] = useState([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -126,8 +126,8 @@ export default function Companies() {
   };
 
   const totalPages = Math.ceil(count / PAGE_SIZE);
-  const canDelete = profile?.role === "ADMIN";
-  const canEdit = profile?.role !== undefined;
+  const canDelete = role === "ADMIN";
+  const canEdit   = role === "ADMIN" || role === "MANAGER";
 
   return (
     <>

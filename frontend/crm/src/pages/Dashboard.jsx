@@ -26,7 +26,7 @@ function StatCard({ title, value, icon, accent, to }) {
 }
 
 export default function Dashboard() {
-  const { profile } = useContext(AuthContext);
+  const { profile, role } = useContext(AuthContext);
   const [stats, setStats] = useState({ companies: null, contacts: null, logs: null });
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);

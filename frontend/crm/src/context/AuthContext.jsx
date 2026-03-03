@@ -4,9 +4,23 @@ import api from "../api/axios";
 
 export const AuthContext = createContext();
 
+/**
+ * Decode a JWT and return null if invalid/expired.
+ */
+function safeDecode(token) {
+  try {
+    const decoded = jwtDecode(token);
+    // Reject already-expired tokens so PrivateRoute doesn't flash protected content
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [user, setUser] = useState(null);     // JWT payload (role, org_id, etc.)
+  const [profile, setProfile] = useState(null); // Full user profile from /me/
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async () => {
@@ -18,14 +32,18 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Restore session from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
-      try {
-        setUser(jwtDecode(token));
+      const decoded = safeDecode(token);
+      if (decoded) {
+        setUser(decoded);
         fetchProfile();
-      } catch {
-        setUser(null);
+      } else {
+        // Token expired — clear stale data
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
       }
     }
     setLoading(false);
@@ -34,7 +52,8 @@ export function AuthProvider({ children }) {
   const login = async (accessToken, refreshToken) => {
     localStorage.setItem("access_token", accessToken);
     localStorage.setItem("refresh_token", refreshToken);
-    setUser(jwtDecode(accessToken));
+    const decoded = safeDecode(accessToken);
+    setUser(decoded);
     await fetchProfile();
   };
 
@@ -45,8 +64,11 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
+  // Derive role: prefer profile (server-authoritative), fall back to JWT claim
+  const role = profile?.role ?? user?.role ?? null;
+
   return (
-    <AuthContext.Provider value={{ user, profile, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, profile, login, logout, loading, role }}>
       {children}
     </AuthContext.Provider>
   );

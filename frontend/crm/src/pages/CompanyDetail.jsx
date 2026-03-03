@@ -35,7 +35,7 @@ function FormField({ label, children, error }) {
 export default function CompanyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { profile } = useContext(AuthContext);
+  const { profile, role } = useContext(AuthContext);
 
   const [company, setCompany] = useState(null);
   const [contacts, setContacts] = useState([]);
@@ -58,8 +58,8 @@ export default function CompanyDetail() {
   const contactForm = useForm();
 
   const PAGE_SIZE = 10;
-  const canDelete = profile?.role === "ADMIN";
-  const canEdit = profile?.role !== undefined;
+  const canDelete = role === "ADMIN";
+  const canEdit   = role === "ADMIN" || role === "MANAGER";
 
   const fetchCompany = useCallback(async () => {
     setLoadingCompany(true);
