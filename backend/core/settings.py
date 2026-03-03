@@ -152,16 +152,15 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 # CORS
 # ---------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = [
-    o.strip() for o in
-    os.getenv(
-        "CORS_ALLOWED_ORIGINS",
-        "http://localhost:5173,http://localhost:5174,http://localhost:5175,"
-        "http://localhost:5176,http://127.0.0.1:5173,http://127.0.0.1:5174,"
-        "http://127.0.0.1:5175,http://127.0.0.1:5176",
-    ).split(",")
-    if o.strip()
-]
+if DEBUG:
+    # Allow every localhost origin in dev — eliminates CORS as a login blocker
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        o.strip() for o in
+        os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+        if o.strip()
+    ]
 
 # ---------------------------------------------------------------------------
 # Storage — use S3 only when AWS_BUCKET is configured
@@ -169,12 +168,14 @@ CORS_ALLOWED_ORIGINS = [
 _aws_bucket = os.getenv("AWS_BUCKET")
 
 if _aws_bucket:
-    AWS_ACCESS_KEY_ID     = os.getenv("AWS_KEY")
-    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET")
+    AWS_ACCESS_KEY_ID      = os.getenv("AWS_KEY")
+    AWS_SECRET_ACCESS_KEY  = os.getenv("AWS_SECRET")
     AWS_STORAGE_BUCKET_NAME = _aws_bucket
-    AWS_S3_REGION_NAME    = os.getenv("AWS_REGION", "us-east-1")
-    AWS_QUERYSTRING_AUTH  = False          # public URLs (no signed query strings)
-    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_REGION_NAME     = os.getenv("AWS_REGION", "us-east-1")
+    AWS_QUERYSTRING_AUTH   = True          # pre-signed URLs — works with private buckets
+    AWS_QUERYSTRING_EXPIRE = 60 * 60 * 24  # 24h signature expiry
+    AWS_S3_FILE_OVERWRITE  = False
+    AWS_DEFAULT_ACL        = None          # do not set ACL (respects bucket Block Public Access)
 
     STORAGES = {
         "default": {

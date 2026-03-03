@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
 from .models import (
     Organization,
     User,
@@ -44,9 +45,16 @@ class UserAdmin(BaseUserAdmin):
 # ----------------------------
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "industry", "country", "organization", "created_at")
+    list_display = ("id", "logo_preview", "name", "industry", "country", "organization", "created_at")
     list_filter = ("industry", "country", "organization")
     search_fields = ("name", "industry")
+    readonly_fields = ("logo_preview",)
+
+    def logo_preview(self, obj):
+        if obj.logo:
+            return format_html('<img src="{}" style="height:48px;width:48px;object-fit:contain;border-radius:6px;" />', obj.logo.url)
+        return "—"
+    logo_preview.short_description = "Logo"
 
 
 # ----------------------------
