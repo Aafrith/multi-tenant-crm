@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
+import Navbar from "../components/Navbar";
 
 const CONTACT_ROLES = [
   { value: "DECISION_MAKER", label: "Decision Maker" },
@@ -202,6 +203,7 @@ export default function Contacts() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Header */}
@@ -432,13 +434,14 @@ export default function Contacts() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
-                  type="text"
+                  type="tel"
                   name="phone"
                   value={form.phone}
                   onChange={handleFormChange}
-                  placeholder="+1 555 000 0000"
+                  placeholder="e.g. +94 77 123 4567"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                <p className="text-xs text-gray-400 mt-1">Include country code, e.g. +1, +44, +94</p>
               </div>
 
               {/* Role */}

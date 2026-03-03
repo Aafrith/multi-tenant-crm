@@ -72,7 +72,7 @@ class Contact(models.Model):
 
     full_name = models.CharField(max_length=200)
     email = models.EmailField()
-    phone = models.CharField(max_length=15, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
     role = models.CharField(max_length=30, choices=ROLE, default="OTHER")
     is_deleted = models.BooleanField(default=False)
 
