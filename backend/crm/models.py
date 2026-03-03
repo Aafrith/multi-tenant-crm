@@ -60,17 +60,32 @@ class Company(models.Model):
 
 class Contact(models.Model):
 
+    ROLE = (
+        ("DECISION_MAKER", "Decision Maker"),
+        ("INFLUENCER", "Influencer"),
+        ("END_USER", "End User"),
+        ("OTHER", "Other"),
+    )
+
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
     full_name = models.CharField(max_length=200)
     email = models.EmailField()
     phone = models.CharField(max_length=15, null=True, blank=True)
+    role = models.CharField(max_length=30, choices=ROLE, default="OTHER")
+    is_deleted = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ActivityLog(models.Model):
+
+    ACTION_CHOICES = (
+        ("CREATE", "Create"),
+        ("UPDATE", "Update"),
+        ("DELETE", "Delete"),
+    )
 
     user = models.ForeignKey(
         User,
@@ -78,8 +93,21 @@ class ActivityLog(models.Model):
         null=True
     )
 
-    action = models.CharField(max_length=20)
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     model = models.CharField(max_length=50)
     object_id = models.IntegerField()
 
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"{self.action} {self.model} #{self.object_id}"
