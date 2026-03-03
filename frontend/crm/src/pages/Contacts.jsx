@@ -2,7 +2,12 @@ import { useContext, useEffect, useState } from "react";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 
-const ROLES = ["ADMIN", "MANAGER", "STAFF", "Viewer"];
+const CONTACT_ROLES = [
+  { value: "DECISION_MAKER", label: "Decision Maker" },
+  { value: "INFLUENCER",     label: "Influencer" },
+  { value: "END_USER",       label: "End User" },
+  { value: "OTHER",          label: "Other" },
+];
 
 const emptyForm = {
   full_name: "",
@@ -132,17 +137,18 @@ export default function Contacts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.full_name.trim()) { setFormError("Full name is required."); return; }
-    if (!form.company)          { setFormError("Please select a company.");  return; }
+    if (!form.full_name.trim()) { setFormError("Full name is required.");        return; }
+    if (!form.email.trim())     { setFormError("Email address is required.");   return; }
+    if (!form.company)          { setFormError("Please select a company.");      return; }
 
     setSubmitting(true);
     setFormError(null);
     try {
       const payload = {
         full_name: form.full_name.trim(),
-        email:     form.email.trim() || null,
+        email:     form.email.trim(),
         phone:     form.phone.trim() || null,
-        role:      form.role.trim()  || null,
+        role:      form.role || "OTHER",
         company:   Number(form.company),
       };
       if (editTarget) {
@@ -308,7 +314,9 @@ export default function Contacts() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {c.role ? (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{c.role}</span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            {CONTACT_ROLES.find((r) => r.value === c.role)?.label ?? c.role}
+                          </span>
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>
                         )}
@@ -409,7 +417,7 @@ export default function Contacts() {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
                 <input
                   type="email"
                   name="email"
@@ -436,14 +444,17 @@ export default function Contacts() {
               {/* Role */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contact Role</label>
-                <input
-                  type="text"
+                <select
                   name="role"
                   value={form.role}
                   onChange={handleFormChange}
-                  placeholder="e.g. CEO, Sales Rep, IT Manager"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Select a role...</option>
+                  {CONTACT_ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Company */}
