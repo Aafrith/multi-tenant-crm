@@ -126,8 +126,9 @@ export default function Companies() {
   };
 
   const totalPages = Math.ceil(count / PAGE_SIZE);
-  const canDelete = role === "ADMIN";
+  const canCreate = role === "ADMIN" || role === "MANAGER";
   const canEdit   = role === "ADMIN" || role === "MANAGER";
+  const canDelete = role === "ADMIN";
 
   return (
     <>
@@ -139,7 +140,7 @@ export default function Companies() {
             <h1 className="page-title">Companies</h1>
             <p className="page-sub">{count} record{count !== 1 ? "s" : ""}</p>
           </div>
-          <button className="btn btn-primary" onClick={openCreate}>+ Add Company</button>
+          {canCreate && <button className="btn btn-primary" onClick={openCreate}>+ Add Company</button>}
         </div>
 
         {/* Filters */}

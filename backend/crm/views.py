@@ -83,6 +83,8 @@ class CompanyViewSet(ModelViewSet):
         )
 
     def perform_create(self, serializer):
+        if self.request.user.role == "STAFF":
+            raise PermissionDenied("Staff cannot create company records.")
         instance = serializer.save(organization=self.request.user.organization)
         log_action(self.request.user, "CREATE", instance)
 
@@ -128,6 +130,8 @@ class ContactViewSet(ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
+        if self.request.user.role == "STAFF":
+            raise PermissionDenied("Staff cannot create contact records.")
         # Ensure the company belongs to the user's organization
         company = serializer.validated_data.get("company")
         if company and company.organization != self.request.user.organization:

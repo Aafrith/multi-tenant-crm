@@ -58,8 +58,9 @@ export default function CompanyDetail() {
   const contactForm = useForm();
 
   const PAGE_SIZE = 10;
-  const canDelete = role === "ADMIN";
+  const canCreate = role === "ADMIN" || role === "MANAGER";
   const canEdit   = role === "ADMIN" || role === "MANAGER";
+  const canDelete = role === "ADMIN";
 
   const fetchCompany = useCallback(async () => {
     setLoadingCompany(true);
@@ -255,7 +256,7 @@ export default function CompanyDetail() {
                 placeholder="🔍  Search contacts…"
                 style={{ minWidth: 180 }}
               />
-              <button className="btn btn-primary" onClick={openAddContact}>+ Add</button>
+              {canCreate && <button className="btn btn-primary" onClick={openAddContact}>+ Add</button>}
             </div>
           </div>
 
