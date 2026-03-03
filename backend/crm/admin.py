@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Organization,
     User,
@@ -19,12 +20,23 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 # ----------------------------
 # User Admin
+# Extends BaseUserAdmin so passwords are properly hashed via the
+# built-in add/change password forms.  Custom fields (organization,
+# role) are appended as an extra fieldset.
 # ----------------------------
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ("id", "username", "email", "role", "organization")
-    list_filter = ("role", "organization")
+class UserAdmin(BaseUserAdmin):
+    list_display = ("id", "username", "email", "role", "organization", "is_active")
+    list_filter = ("role", "organization", "is_active", "is_staff")
     search_fields = ("username", "email")
+
+    # Append our custom fields to the existing fieldsets
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ("CRM Settings", {"fields": ("organization", "role")}),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ("CRM Settings", {"fields": ("organization", "role")}),
+    )
 
 
 # ----------------------------
