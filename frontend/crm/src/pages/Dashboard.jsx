@@ -1,13 +1,14 @@
-import { useEffect, useState, useContext } from "react";
+﻿import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 import { AuthContext } from "../context/AuthContext";
 
 const STAT_ICONS = {
-  companies: "🏢",
-  contacts:  "👥",
-  logs:      "📋",
+  companies: "ðŸ¢",
+  contacts:  "ðŸ‘¥",
+  logs:      "ðŸ“‹",
+  users:     "ðŸ”‘",
 };
 
 function StatCard({ title, value, icon, accent, to }) {
@@ -25,34 +26,63 @@ function StatCard({ title, value, icon, accent, to }) {
   return to ? <Link to={to} style={{ textDecoration: "none" }}>{inner}</Link> : inner;
 }
 
+// Role-based quick action definitions
+const QUICK_ACTIONS = {
+  ADMIN: [
+    { to: "/companies", label: "Manage Companies", desc: "Add, edit, or delete companies", icon: "ðŸ¢", color: "#4f46e5" },
+    { to: "/contacts",  label: "Manage Contacts",  desc: "View and manage all contacts",  icon: "ðŸ‘¥", color: "#0ea5e9" },
+    { to: "/users",     label: "Manage Users",     desc: "Add team members & assign roles", icon: "ðŸ”‘", color: "#7c3aed" },
+    { to: "/logs",      label: "Activity Logs",    desc: "Audit every create/edit/delete", icon: "ðŸ“‹", color: "#8b5cf6" },
+  ],
+  MANAGER: [
+    { to: "/companies", label: "Manage Companies", desc: "Add or edit companies", icon: "ðŸ¢", color: "#4f46e5" },
+    { to: "/contacts",  label: "Manage Contacts",  desc: "View and manage all contacts", icon: "ðŸ‘¥", color: "#0ea5e9" },
+    { to: "/logs",      label: "Activity Logs",    desc: "View audit trail", icon: "ðŸ“‹", color: "#8b5cf6" },
+  ],
+  STAFF: [
+    { to: "/companies", label: "View Companies",  desc: "Browse company directory", icon: "ðŸ¢", color: "#4f46e5" },
+    { to: "/contacts",  label: "View Contacts",   desc: "Browse contact directory", icon: "ðŸ‘¥", color: "#0ea5e9" },
+  ],
+};
+
 export default function Dashboard() {
   const { profile, role } = useContext(AuthContext);
-  const [stats, setStats] = useState({ companies: null, contacts: null, logs: null });
+  const [stats, setStats] = useState({ companies: null, contacts: null, logs: null, users: null });
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [compRes, contactRes, logRes] = await Promise.all([
+        const isAdmin   = role === "ADMIN";
+        const isManager = role === "MANAGER";
+
+        const requests = [
           api.get("/companies/?page_size=1"),
           api.get("/contacts/?page_size=1"),
-          api.get("/logs/?page_size=5"),
-        ]);
+        ];
+        // Logs visible to ADMIN + MANAGER; Users visible to ADMIN only
+        if (isAdmin || isManager) requests.push(api.get("/logs/?page_size=5"));
+        if (isAdmin)              requests.push(api.get("/users/"));
+
+        const results = await Promise.all(requests);
+        const [compRes, contactRes, logRes, userRes] = results;
+
         setStats({
           companies: compRes.data.count,
-          contacts: contactRes.data.count,
-          logs: logRes.data.count,
+          contacts:  contactRes.data.count,
+          logs:      logRes?.data.count   ?? null,
+          users:     userRes ? (userRes.data.results?.length ?? userRes.data.length ?? null) : null,
         });
-        setRecentLogs(logRes.data.results || []);
+        setRecentLogs(logRes?.data.results || []);
       } catch {
-        // silent — data loads partially
+        // silent â€” partial load
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [role]);
 
   const actionBadge = (action) => {
     const cls = { CREATE: "badge-green", UPDATE: "badge-yellow", DELETE: "badge-red" };
@@ -61,6 +91,7 @@ export default function Dashboard() {
 
   const planColor = { FREE: "#94a3b8", PRO: "#4f46e5", ENTERPRISE: "#0ea5e9" };
   const plan = profile?.organization?.subscription_plan?.toUpperCase() || "FREE";
+  const quickActions = QUICK_ACTIONS[role] || QUICK_ACTIONS.STAFF;
 
   return (
     <>
@@ -70,7 +101,7 @@ export default function Dashboard() {
         <div className="page-header" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid #e2e8f0", marginBottom: "2rem" }}>
           <div>
             <h1 className="page-title">
-              Welcome back, {profile?.first_name || profile?.username || "…"} 👋
+              Welcome back, {profile?.first_name || profile?.username || "â€¦"} ðŸ‘‹
             </h1>
             <p className="page-sub" style={{ marginTop: ".35rem" }}>
               {profile?.organization?.name}&ensp;
@@ -78,6 +109,13 @@ export default function Dashboard() {
                 {plan}
               </span>
             </p>
+          </div>
+          {/* Role badge on dashboard header */}
+          <div style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".5rem 1rem", background: "#f8fafc", borderRadius: ".75rem", border: "1px solid #e2e8f0" }}>
+            <span style={{ fontSize: ".75rem", color: "#94a3b8" }}>Signed in as</span>
+            <span style={{ fontSize: ".8125rem", fontWeight: 700, color: role === "ADMIN" ? "#6d28d9" : role === "MANAGER" ? "#1d4ed8" : "#15803d" }}>
+              {role}
+            </span>
           </div>
         </div>
 
@@ -87,56 +125,107 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {/* Stat cards */}
+            {/* Stat cards â€” only show what this role can see */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
               <StatCard title="Companies"     value={stats.companies} icon={STAT_ICONS.companies} accent="#4f46e5" to="/companies" />
               <StatCard title="Contacts"      value={stats.contacts}  icon={STAT_ICONS.contacts}  accent="#0ea5e9" to="/contacts" />
-              <StatCard title="Activity Logs" value={stats.logs}      icon={STAT_ICONS.logs}      accent="#8b5cf6" to="/logs" />
-            </div>
-
-            {/* Recent activity */}
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
-                <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>Recent Activity</h2>
-                <Link to="/logs" style={{ fontSize: ".82rem", color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>
-                  View all →
-                </Link>
-              </div>
-
-              {recentLogs.length === 0 ? (
-                <p style={{ color: "#94a3b8", fontSize: ".875rem", textAlign: "center", padding: "2rem 0" }}>
-                  No activity recorded yet.
-                </p>
-              ) : (
-                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-                  {recentLogs.map((log, idx) => (
-                    <li key={log.id} style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: ".75rem 0",
-                      borderTop: idx === 0 ? "none" : "1px solid #f1f5f9",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: ".75rem" }}>
-                        {actionBadge(log.action)}
-                        <span style={{ fontSize: ".875rem", color: "#334155" }}>
-                          <strong style={{ color: "#0f172a" }}>{log.model}</strong>
-                          &nbsp;#{log.object_id}
-                        </span>
-                        {log.user_name && (
-                          <span style={{ fontSize: ".78rem", color: "#94a3b8" }}>by {log.user_name}</span>
-                        )}
-                      </div>
-                      <span style={{ fontSize: ".75rem", color: "#94a3b8", whiteSpace: "nowrap" }}>
-                        {new Date(log.timestamp).toLocaleString()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              {(role === "ADMIN" || role === "MANAGER") && (
+                <StatCard title="Activity Logs" value={stats.logs}   icon={STAT_ICONS.logs}      accent="#8b5cf6" to="/logs" />
+              )}
+              {role === "ADMIN" && (
+                <StatCard title="Team Members"  value={stats.users}  icon={STAT_ICONS.users}     accent="#7c3aed" to="/users" />
               )}
             </div>
+
+            {/* Quick actions */}
+            <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
+              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1rem" }}>Quick Actions</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: "1rem" }}>
+                {quickActions.map((a) => (
+                  <Link key={a.to} to={a.to} style={{ textDecoration: "none" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: ".75rem", padding: "1rem", borderRadius: ".75rem", border: "1px solid #e2e8f0", transition: "border-color .15s, box-shadow .15s", cursor: "pointer" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = a.color; e.currentTarget.style.boxShadow = `0 0 0 3px ${a.color}18`; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
+                      <div style={{ width: 38, height: 38, borderRadius: ".5rem", background: a.color + "15", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", flexShrink: 0 }}>
+                        {a.icon}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: ".875rem", fontWeight: 700, color: "#0f172a", marginBottom: ".2rem" }}>{a.label}</div>
+                        <div style={{ fontSize: ".75rem", color: "#94a3b8", lineHeight: 1.4 }}>{a.desc}</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent activity â€” ADMIN and MANAGER only */}
+            {(role === "ADMIN" || role === "MANAGER") && (
+              <div className="card" style={{ padding: "1.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+                  <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>Recent Activity</h2>
+                  <Link to="/logs" style={{ fontSize: ".82rem", color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>
+                    View all â†’
+                  </Link>
+                </div>
+
+                {recentLogs.length === 0 ? (
+                  <p style={{ color: "#94a3b8", fontSize: ".875rem", textAlign: "center", padding: "2rem 0" }}>
+                    No activity recorded yet.
+                  </p>
+                ) : (
+                  <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                    {recentLogs.map((log, idx) => (
+                      <li key={log.id} style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: ".75rem 0",
+                        borderTop: idx === 0 ? "none" : "1px solid #f1f5f9",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: ".75rem" }}>
+                          {actionBadge(log.action)}
+                          <span style={{ fontSize: ".875rem", color: "#334155" }}>
+                            <strong style={{ color: "#0f172a" }}>{log.model}</strong>
+                            &nbsp;#{log.object_id}
+                          </span>
+                          {log.user_name && (
+                            <span style={{ fontSize: ".78rem", color: "#94a3b8" }}>by {log.user_name}</span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: ".75rem", color: "#94a3b8", whiteSpace: "nowrap" }}>
+                          {new Date(log.timestamp).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* STAFF: permissions info panel */}
+            {role === "STAFF" && (
+              <div className="card" style={{ padding: "1.5rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", marginBottom: ".75rem" }}>Your Access Level</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px,1fr))", gap: ".75rem" }}>
+                  {[
+                    { label: "View Companies",  allowed: true  },
+                    { label: "View Contacts",   allowed: true  },
+                    { label: "Add / Edit Records", allowed: false },
+                    { label: "Delete Records",  allowed: false },
+                    { label: "View Audit Logs", allowed: false },
+                    { label: "Manage Users",    allowed: false },
+                  ].map(({ label, allowed }) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".625rem .875rem", borderRadius: ".625rem", background: allowed ? "#f0fdf4" : "#fef2f2", border: `1px solid ${allowed ? "#bbf7d0" : "#fecaca"}` }}>
+                      <span style={{ fontSize: "1rem" }}>{allowed ? "âœ…" : "ðŸš«"}</span>
+                      <span style={{ fontSize: ".8125rem", fontWeight: 500, color: allowed ? "#15803d" : "#dc2626" }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>
     </>
   );
 }
-

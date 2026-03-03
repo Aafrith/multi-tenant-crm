@@ -9,12 +9,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Company, Contact, ActivityLog
+from .models import Company, Contact, ActivityLog, User
 from .serializers import (
     CompanySerializer,
     ContactSerializer,
     ActivityLogSerializer,
     UserSerializer,
+    OrgUserSerializer,
 )
 from .permissions import IsAdmin, IsManagerOrAdmin
 
@@ -159,6 +160,34 @@ class ContactViewSet(ModelViewSet):
             {"detail": "Contact soft-deleted successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+class OrgUserViewSet(ModelViewSet):
+    """
+    ADMIN-only endpoint to manage users within their own organisation.
+    GET  /api/v1/users/         – list org users
+    POST /api/v1/users/         – create user in org
+    PATCH /api/v1/users/{id}/   – update role / details / password
+    DELETE /api/v1/users/{id}/  – deactivate (soft) or delete user
+    """
+    serializer_class = OrgUserSerializer
+    permission_classes = [IsAuthenticated, IsAdmin]
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            organization=self.request.user.organization
+        ).order_by("username")
+
+    def perform_create(self, serializer):
+        serializer.save(organization=self.request.user.organization)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance == request.user:
+            raise PermissionDenied("You cannot delete your own account.")
+        instance.delete()
+        return Response({"detail": "User deleted."}, status=status.HTTP_200_OK)
 
 
 class ActivityLogViewSet(ModelViewSet):

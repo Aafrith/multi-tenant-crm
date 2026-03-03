@@ -8,11 +8,12 @@ const ROLE_BADGE = {
   STAFF:   { bg: "#dcfce7", color: "#15803d", label: "Staff" },
 };
 
-const NAV_ITEMS = [
-  { to: "/",          label: "Dashboard",     icon: "⊞" },
-  { to: "/companies", label: "Companies",     icon: "🏢" },
-  { to: "/contacts", label: "Contacts",      icon: "👥" },
-  { to: "/logs",      label: "Activity Logs", icon: "📋" },
+const BASE_NAV = [
+  { to: "/",          label: "Dashboard",     icon: "⊞",  roles: ["ADMIN","MANAGER","STAFF"] },
+  { to: "/companies", label: "Companies",     icon: "🏢",  roles: ["ADMIN","MANAGER","STAFF"] },
+  { to: "/contacts",  label: "Contacts",      icon: "👥",  roles: ["ADMIN","MANAGER","STAFF"] },
+  { to: "/users",     label: "Users",         icon: "🔑",  roles: ["ADMIN"] },
+  { to: "/logs",      label: "Activity Logs", icon: "📋",  roles: ["ADMIN","MANAGER"] },
 ];
 
 export default function Navbar() {
@@ -21,6 +22,7 @@ export default function Navbar() {
 
   const roleBadge = ROLE_BADGE[role] || ROLE_BADGE.STAFF;
   const initials = (profile?.first_name?.[0] || profile?.username?.[0] || "U").toUpperCase();
+  const navItems = BASE_NAV.filter((item) => !role || item.roles.includes(role));
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -58,7 +60,7 @@ export default function Navbar() {
 
         {/* Nav links */}
         <nav style={{ display: "flex", gap: ".25rem", flex: 1, justifyContent: "center" }}>
-          {NAV_ITEMS.map(({ to, label, icon }) => (
+          {navItems.map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}

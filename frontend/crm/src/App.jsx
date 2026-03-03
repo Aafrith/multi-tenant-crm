@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import CompanyDetail from "./pages/CompanyDetail";
 import Contacts from "./pages/Contacts";
+import Users from "./pages/Users";
 import ActivityLogs from "./pages/ActivityLogs";
 
 import PrivateRoute from "./routes/PrivateRoute";
@@ -35,6 +36,12 @@ export default function App() {
       <Route path="/contacts" element={
         <PrivateRoute>
           <Contacts />
+        </PrivateRoute>
+      } />
+
+      <Route path="/users" element={
+        <PrivateRoute>
+          <Users />
         </PrivateRoute>
       } />
 

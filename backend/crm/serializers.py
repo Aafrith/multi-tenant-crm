@@ -19,6 +19,34 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "first_name", "last_name", "role", "organization"]
 
 
+class OrgUserSerializer(serializers.ModelSerializer):
+    """Used by ADMIN to create / update users within their own organisation."""
+    password = serializers.CharField(write_only=True, required=False, min_length=6)
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name", "role", "password", "is_active"]
+        extra_kwargs = {
+            "username": {"required": True},
+        }
+
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+        user = User(**validated_data)
+        user.set_password(password or User.objects.make_random_password())
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
+
 class CompanySerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()
 
