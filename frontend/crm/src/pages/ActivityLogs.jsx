@@ -2,10 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 
-const ACTION_COLORS = {
-  CREATE: "bg-green-100 text-green-700",
-  UPDATE: "bg-yellow-100 text-yellow-700",
-  DELETE: "bg-red-100 text-red-700",
+const ACTION_BADGE = {
+  CREATE: "badge-green",
+  UPDATE: "badge-yellow",
+  DELETE: "badge-red",
 };
 
 export default function ActivityLogs() {
@@ -43,33 +43,38 @@ export default function ActivityLogs() {
 
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
-  const formatDate = (ts) => {
-    const d = new Date(ts);
-    return d.toLocaleString();
+  // Visible page window (max 5)
+  const pageWindow = () => {
+    const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+    return Array.from({ length: Math.min(5, totalPages) }, (_, i) => start + i).filter((p) => p >= 1 && p <= totalPages);
   };
 
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <main className="page">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Activity Logs</h1>
-          <p className="text-gray-500 text-sm">{count} log entr{count !== 1 ? "ies" : "y"}</p>
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Activity Logs</h1>
+            <p className="page-sub">{count} log entr{count !== 1 ? "ies" : "y"}</p>
+          </div>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: ".75rem", marginBottom: "1rem" }}>
           <input
+            className="input"
+            style={{ flex: "1 1 200px" }}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search by user, action..."
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="🔍  Search by user, model…"
           />
           <select
+            className="input"
+            style={{ flex: "0 1 160px" }}
             value={filterAction}
             onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Actions</option>
             <option value="CREATE">Create</option>
@@ -77,9 +82,10 @@ export default function ActivityLogs() {
             <option value="DELETE">Delete</option>
           </select>
           <select
+            className="input"
+            style={{ flex: "0 1 160px" }}
             value={filterModel}
             onChange={(e) => { setFilterModel(e.target.value); setPage(1); }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Models</option>
             <option value="Company">Company</option>
@@ -87,99 +93,70 @@ export default function ActivityLogs() {
           </select>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}
 
-        {/* Logs Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Table card */}
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div style={{ display: "flex", justifyContent: "center", padding: "3rem 0" }}>
+              <span className="spinner" style={{ width: 32, height: 32 }} />
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-lg">No activity logs found</p>
-              <p className="text-sm mt-1">Logs are created when you add, edit or delete companies and contacts.</p>
+            <div style={{ textAlign: "center", padding: "3.5rem 1rem", color: "#94a3b8" }}>
+              <p style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: ".5rem" }}>No activity logs found</p>
+              <p style={{ fontSize: ".875rem" }}>Logs are created when you add, edit or delete companies and contacts.</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Timestamp</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">User</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Model</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Object ID</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                      {formatDate(log.timestamp)}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-800">
-                      {log.user_name || "System"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ACTION_COLORS[log.action] || "bg-gray-100 text-gray-600"}`}>
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{log.model}</td>
-                    <td className="px-4 py-3 text-gray-500">#{log.object_id}</td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Model</th>
+                    <th>Object ID</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log.id}>
+                      <td style={{ color: "#94a3b8", whiteSpace: "nowrap", fontSize: ".8rem" }}>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </td>
+                      <td style={{ fontWeight: 600, color: "#0f172a" }}>{log.user_name || "System"}</td>
+                      <td>
+                        <span className={`badge ${ACTION_BADGE[log.action] || "badge-gray"}`}>{log.action}</span>
+                      </td>
+                      <td style={{ color: "#64748b" }}>{log.model}</td>
+                      <td style={{ color: "#94a3b8", fontFamily: "monospace" }}>#{log.object_id}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-gray-500">
-              Page {page} of {totalPages} &middot; {count} total entries
-            </p>
-            <div className="flex gap-2">
-              <button
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const pg = page <= 3 ? i + 1 : page - 2 + i;
-                if (pg > totalPages) return null;
-                return (
-                  <button
-                    key={pg}
-                    onClick={() => setPage(pg)}
-                    className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${
-                      pg === page
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {pg}
-                  </button>
-                );
-              })}
-              <button
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+          <div className="pagination">
+            <span style={{ fontSize: ".8125rem", color: "#64748b" }}>
+              Page {page} of {totalPages} &middot; {count} total
+            </span>
+            <div className="pagination-btns">
+              <button className="page-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>‹ Prev</button>
+              {pageWindow().map((pg) => (
+                <button key={pg} className={`page-btn${pg === page ? " active" : ""}`} onClick={() => setPage(pg)}>
+                  {pg}
+                </button>
+              ))}
+              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next ›</button>
             </div>
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 }
+

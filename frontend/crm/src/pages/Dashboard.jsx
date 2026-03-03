@@ -4,14 +4,25 @@ import api from "../api/axios";
 import Navbar from "../components/Navbar";
 import { AuthContext } from "../context/AuthContext";
 
-function StatCard({ title, value, color, to }) {
-  const content = (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 ${to ? "hover:shadow-md transition-shadow cursor-pointer" : ""}`}>
-      <p className="text-sm text-gray-500 font-medium">{title}</p>
-      <p className={`text-3xl font-bold mt-1 ${color}`}>{value ?? "—"}</p>
+const STAT_ICONS = {
+  companies: "🏢",
+  contacts:  "👥",
+  logs:      "📋",
+};
+
+function StatCard({ title, value, icon, accent, to }) {
+  const inner = (
+    <div className="card" style={{ padding: "1.5rem", display: "flex", alignItems: "center", gap: "1rem", transition: "box-shadow .18s", cursor: to ? "pointer" : "default" }}>
+      <div style={{ width: 48, height: 48, borderRadius: ".75rem", background: accent + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", flexShrink: 0 }}>
+        {icon}
+      </div>
+      <div>
+        <p style={{ fontSize: ".78rem", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: ".25rem" }}>{title}</p>
+        <p style={{ fontSize: "2rem", fontWeight: 800, color: accent, lineHeight: 1 }}>{value ?? <span className="spinner" style={{ width: 20, height: 20, display: "inline-block" }} />}</p>
+      </div>
     </div>
   );
-  return to ? <Link to={to}>{content}</Link> : content;
+  return to ? <Link to={to} style={{ textDecoration: "none" }}>{inner}</Link> : inner;
 }
 
 export default function Dashboard() {
@@ -35,7 +46,7 @@ export default function Dashboard() {
         });
         setRecentLogs(logRes.data.results || []);
       } catch {
-        // silent fail — data might load partially
+        // silent — data loads partially
       } finally {
         setLoading(false);
       }
@@ -44,70 +55,77 @@ export default function Dashboard() {
   }, []);
 
   const actionBadge = (action) => {
-    const map = {
-      CREATE: "bg-green-100 text-green-700",
-      UPDATE: "bg-yellow-100 text-yellow-700",
-      DELETE: "bg-red-100 text-red-700",
-    };
-    return (
-      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[action] || "bg-gray-100 text-gray-600"}`}>
-        {action}
-      </span>
-    );
+    const cls = { CREATE: "badge-green", UPDATE: "badge-yellow", DELETE: "badge-red" };
+    return <span className={`badge ${cls[action] || "badge-gray"}`}>{action}</span>;
   };
+
+  const planColor = { FREE: "#94a3b8", PRO: "#4f46e5", ENTERPRISE: "#0ea5e9" };
+  const plan = profile?.organization?.subscription_plan?.toUpperCase() || "FREE";
 
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Welcome back, {profile?.first_name || profile?.username}
-          </h1>
-          <p className="text-gray-500 mt-1">
-            {profile?.organization?.name} &middot;{" "}
-            <span className="font-medium text-blue-600 capitalize">
-              {profile?.organization?.subscription_plan}
-            </span>{" "}
-            plan
-          </p>
+      <main className="page">
+        {/* Welcome header */}
+        <div className="page-header" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid #e2e8f0", marginBottom: "2rem" }}>
+          <div>
+            <h1 className="page-title">
+              Welcome back, {profile?.first_name || profile?.username || "…"} 👋
+            </h1>
+            <p className="page-sub" style={{ marginTop: ".35rem" }}>
+              {profile?.organization?.name}&ensp;
+              <span style={{ display: "inline-block", background: planColor[plan] + "1a", color: planColor[plan], border: `1px solid ${planColor[plan]}44`, borderRadius: "999px", fontSize: ".72rem", fontWeight: 700, padding: ".15em .65em", textTransform: "uppercase", letterSpacing: ".06em" }}>
+                {plan}
+              </span>
+            </p>
+          </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: "4rem" }}>
+            <span className="spinner" style={{ width: 36, height: 36 }} />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <StatCard title="Total Companies" value={stats.companies} color="text-blue-700" to="/companies" />
-              <StatCard title="Total Contacts" value={stats.contacts} color="text-green-700" />
-              <StatCard title="Activity Logs" value={stats.logs} color="text-purple-700" to="/logs" />
+            {/* Stat cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
+              <StatCard title="Companies"     value={stats.companies} icon={STAT_ICONS.companies} accent="#4f46e5" to="/companies" />
+              <StatCard title="Contacts"      value={stats.contacts}  icon={STAT_ICONS.contacts}  accent="#0ea5e9" />
+              <StatCard title="Activity Logs" value={stats.logs}      icon={STAT_ICONS.logs}      accent="#8b5cf6" to="/logs" />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800">Recent Activity</h2>
-                <Link to="/logs" className="text-blue-600 text-sm hover:underline">
+            {/* Recent activity */}
+            <div className="card" style={{ padding: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>Recent Activity</h2>
+                <Link to="/logs" style={{ fontSize: ".82rem", color: "#4f46e5", fontWeight: 600, textDecoration: "none" }}>
                   View all →
                 </Link>
               </div>
+
               {recentLogs.length === 0 ? (
-                <p className="text-gray-400 text-sm">No activity recorded yet.</p>
+                <p style={{ color: "#94a3b8", fontSize: ".875rem", textAlign: "center", padding: "2rem 0" }}>
+                  No activity recorded yet.
+                </p>
               ) : (
-                <ul className="divide-y divide-gray-100">
-                  {recentLogs.map((log) => (
-                    <li key={log.id} className="py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  {recentLogs.map((log, idx) => (
+                    <li key={log.id} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: ".75rem 0",
+                      borderTop: idx === 0 ? "none" : "1px solid #f1f5f9",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: ".75rem" }}>
                         {actionBadge(log.action)}
-                        <span className="text-sm text-gray-700">
-                          <span className="font-medium">{log.model}</span> #{log.object_id}
+                        <span style={{ fontSize: ".875rem", color: "#334155" }}>
+                          <strong style={{ color: "#0f172a" }}>{log.model}</strong>
+                          &nbsp;#{log.object_id}
                         </span>
                         {log.user_name && (
-                          <span className="text-xs text-gray-400">by {log.user_name}</span>
+                          <span style={{ fontSize: ".78rem", color: "#94a3b8" }}>by {log.user_name}</span>
                         )}
                       </div>
-                      <span className="text-xs text-gray-400">
+                      <span style={{ fontSize: ".75rem", color: "#94a3b8", whiteSpace: "nowrap" }}>
                         {new Date(log.timestamp).toLocaleString()}
                       </span>
                     </li>
@@ -117,7 +135,8 @@ export default function Dashboard() {
             </div>
           </>
         )}
-      </div>
+      </main>
     </>
   );
 }
+

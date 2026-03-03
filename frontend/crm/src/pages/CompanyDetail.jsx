@@ -10,14 +10,24 @@ const INDUSTRIES = ["Technology", "Finance", "Healthcare", "Retail", "Manufactur
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    <div className="modal-overlay">
+      <div className="modal-box">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.125rem 1.5rem", borderBottom: "1px solid #e2e8f0" }}>
+          <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>{title}</h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.4rem", lineHeight: 1, color: "#94a3b8", padding: ".2rem .4rem", borderRadius: ".4rem" }}>×</button>
         </div>
-        <div className="p-6">{children}</div>
+        <div style={{ padding: "1.5rem" }}>{children}</div>
       </div>
+    </div>
+  );
+}
+
+function FormField({ label, children, error }) {
+  return (
+    <div style={{ marginBottom: "1rem" }}>
+      <label style={{ display: "block", fontSize: ".8125rem", fontWeight: 600, color: "#374151", marginBottom: ".4rem" }}>{label}</label>
+      {children}
+      {error && <p style={{ color: "#dc2626", fontSize: ".75rem", marginTop: ".3rem" }}>{error}</p>}
     </div>
   );
 }
@@ -171,8 +181,8 @@ export default function CompanyDetail() {
     return (
       <>
         <Navbar />
-        <div className="flex justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: "5rem" }}>
+          <span className="spinner" style={{ width: 36, height: 36 }} />
         </div>
       </>
     );
@@ -180,206 +190,160 @@ export default function CompanyDetail() {
 
   if (!company) return null;
 
+  const ROLE_BADGE_MAP = {
+    DECISION_MAKER: "badge-purple",
+    INFLUENCER:     "badge-blue",
+    END_USER:       "badge-green",
+    OTHER:          "badge-gray",
+  };
+
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <main className="page">
         {/* Breadcrumb */}
-        <nav className="text-sm text-gray-500 mb-4">
-          <Link to="/companies" className="hover:text-blue-600">Companies</Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-800 font-medium">{company.name}</span>
+        <nav style={{ fontSize: ".8125rem", color: "#94a3b8", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: ".5rem" }}>
+          <Link to="/companies" style={{ color: "#4f46e5", textDecoration: "none", fontWeight: 600 }}>Companies</Link>
+          <span>›</span>
+          <span style={{ color: "#64748b" }}>{company.name}</span>
         </nav>
 
-        {/* Company Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row item-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+        {/* Company Header Card */}
+        <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
               {company.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-16 w-16 rounded-lg object-cover" />
+                <img src={company.logo_url} alt={company.name} style={{ height: 64, width: 64, borderRadius: ".75rem", objectFit: "cover", flexShrink: 0 }} />
               ) : (
-                <div className="h-16 w-16 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                <div className="avatar" style={{ width: 64, height: 64, fontSize: "1.5rem", borderRadius: ".75rem", background: "#ede9fe", color: "#4f46e5", flexShrink: 0 }}>
                   {company.name?.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">{company.name}</h1>
-                <div className="flex gap-3 mt-1 text-sm text-gray-500">
-                  <span>{company.industry}</span>
-                  <span>•</span>
-                  <span>{company.country}</span>
-                  <span>•</span>
-                  <span>Added {new Date(company.created_at).toLocaleDateString()}</span>
+                <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", marginBottom: ".4rem" }}>{company.name}</h1>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", alignItems: "center" }}>
+                  <span className="badge badge-purple">{company.industry}</span>
+                  <span className="badge badge-gray">🌍 {company.country}</span>
+                  <span style={{ fontSize: ".78rem", color: "#94a3b8" }}>Added {new Date(company.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div style={{ display: "flex", gap: ".625rem", flexShrink: 0 }}>
               {canEdit && (
-                <button
-                  onClick={() => setShowEditCompany(true)}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Edit
-                </button>
+                <button className="btn btn-ghost" onClick={() => setShowEditCompany(true)}>✏️ Edit</button>
               )}
               {canDelete && (
-                <button
-                  onClick={() => setDeleteCompanyConfirm(true)}
-                  className="px-3 py-1.5 text-sm bg-red-50 border border-red-200 rounded-lg text-red-600 hover:bg-red-100"
-                >
-                  Delete
-                </button>
+                <button className="btn btn-danger" onClick={() => setDeleteCompanyConfirm(true)}>Delete</button>
               )}
             </div>
           </div>
         </div>
 
         {/* Contacts Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          {/* Section header */}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "1.125rem 1.5rem", borderBottom: "1px solid #e2e8f0" }}>
             <div>
-              <h2 className="text-lg font-semibold text-gray-800">Contacts</h2>
-              <p className="text-sm text-gray-500">{contactCount} contact{contactCount !== 1 ? "s" : ""}</p>
+              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Contacts</h2>
+              <p style={{ fontSize: ".78rem", color: "#94a3b8", marginTop: ".2rem" }}>{contactCount} contact{contactCount !== 1 ? "s" : ""}</p>
             </div>
-            <div className="flex gap-3">
+            <div style={{ display: "flex", gap: ".625rem", alignItems: "center" }}>
               <input
+                className="input"
                 value={contactSearch}
                 onChange={(e) => { setContactSearch(e.target.value); setContactPage(1); }}
-                placeholder="Search contacts..."
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="🔍  Search contacts…"
+                style={{ minWidth: 180 }}
               />
-              <button
-                onClick={openAddContact}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium"
-              >
-                + Add Contact
-              </button>
+              <button className="btn btn-primary" onClick={openAddContact}>+ Add</button>
             </div>
           </div>
 
           {loadingContacts ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div style={{ display: "flex", justifyContent: "center", padding: "2.5rem 0" }}>
+              <span className="spinner" style={{ width: 28, height: 28 }} />
             </div>
           ) : contacts.length === 0 ? (
-            <div className="text-center py-10 text-gray-400">
-              <p>No contacts yet.</p>
-              <p className="text-sm mt-1">Add your first contact to get started.</p>
+            <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#94a3b8" }}>
+              <p style={{ fontWeight: 600, marginBottom: ".35rem" }}>No contacts yet.</p>
+              <p style={{ fontSize: ".875rem" }}>Add your first contact to get started.</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {contacts.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{c.full_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{c.email}</td>
-                    <td className="px-4 py-3 text-gray-500">{c.phone || "—"}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
-                        {c.role?.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right space-x-2">
-                      {canEdit && (
-                        <button
-                          onClick={() => openEditContact(c)}
-                          className="text-yellow-600 hover:underline text-xs font-medium"
-                        >
-                          Edit
-                        </button>
-                      )}
-                      {canDelete && (
-                        <button
-                          onClick={() => setDeleteContact(c)}
-                          className="text-red-600 hover:underline text-xs font-medium"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {contacts.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ fontWeight: 600, color: "#0f172a" }}>{c.full_name}</td>
+                      <td style={{ color: "#4f46e5" }}>{c.email}</td>
+                      <td style={{ color: "#94a3b8" }}>{c.phone || "—"}</td>
+                      <td>
+                        <span className={`badge ${ROLE_BADGE_MAP[c.role] || "badge-gray"}`}>
+                          {c.role?.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: ".5rem", justifyContent: "flex-end" }}>
+                          {canEdit && (
+                            <button className="btn btn-ghost btn-sm" onClick={() => openEditContact(c)}>Edit</button>
+                          )}
+                          {canDelete && (
+                            <button className="btn btn-danger btn-sm" onClick={() => setDeleteContact(c)}>Delete</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {/* Pagination */}
           {contactTotalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100">
-              <p className="text-sm text-gray-500">Page {contactPage} of {contactTotalPages}</p>
-              <div className="flex gap-2">
-                <button
-                  disabled={contactPage === 1}
-                  onClick={() => setContactPage((p) => p - 1)}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  disabled={contactPage === contactTotalPages}
-                  onClick={() => setContactPage((p) => p + 1)}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
+            <div className="pagination" style={{ borderTop: "1px solid #e2e8f0", padding: ".875rem 1.5rem" }}>
+              <span style={{ fontSize: ".8125rem", color: "#64748b" }}>Page {contactPage} of {contactTotalPages}</span>
+              <div className="pagination-btns">
+                <button className="page-btn" disabled={contactPage === 1} onClick={() => setContactPage((p) => p - 1)}>‹ Prev</button>
+                <button className="page-btn" disabled={contactPage === contactTotalPages} onClick={() => setContactPage((p) => p + 1)}>Next ›</button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       {/* Edit Company Modal */}
       {showEditCompany && (
         <Modal title="Edit Company" onClose={() => setShowEditCompany(false)}>
-          {formError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm mb-4">{formError}</div>
-          )}
-          <form onSubmit={companyForm.handleSubmit(onUpdateCompany)} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
-              <input
-                {...companyForm.register("name", { required: "Required" })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
-              <select
-                {...companyForm.register("industry", { required: "Required" })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+          {formError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{formError}</div>}
+          <form onSubmit={companyForm.handleSubmit(onUpdateCompany)}>
+            <FormField label="Company Name *" error={companyForm.formState.errors.name?.message}>
+              <input className="input" style={{ width: "100%" }} {...companyForm.register("name", { required: "Required" })} />
+            </FormField>
+            <FormField label="Industry *" error={companyForm.formState.errors.industry?.message}>
+              <select className="input" style={{ width: "100%" }} {...companyForm.register("industry", { required: "Required" })}>
                 {INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-              <input
-                {...companyForm.register("country", { required: "Required" })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-              <input
-                type="file"
-                accept="image/*"
-                {...companyForm.register("logo")}
-                className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:border file:border-gray-300 file:rounded-md file:text-sm file:bg-white"
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setShowEditCompany(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg">
-                {saving ? "Saving..." : "Update"}
+            </FormField>
+            <FormField label="Country *" error={companyForm.formState.errors.country?.message}>
+              <input className="input" style={{ width: "100%" }} {...companyForm.register("country", { required: "Required" })} />
+            </FormField>
+            <FormField label="Logo (optional)">
+              <input type="file" accept="image/*" {...companyForm.register("logo")} style={{ fontSize: ".8125rem", color: "#64748b", width: "100%" }} />
+            </FormField>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: ".75rem", paddingTop: ".5rem" }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setShowEditCompany(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Saving…</> : "Update"}
               </button>
             </div>
           </form>
@@ -389,75 +353,48 @@ export default function CompanyDetail() {
       {/* Delete Company Modal */}
       {deleteCompanyConfirm && (
         <Modal title="Delete Company" onClose={() => setDeleteCompanyConfirm(false)}>
-          <p className="text-gray-600 mb-6">
-            Are you sure you want to delete <strong>{company.name}</strong>? All contacts will remain but the company will be removed.
+          <p style={{ color: "#64748b", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+            Are you sure you want to delete <strong style={{ color: "#0f172a" }}>{company.name}</strong>? This action cannot be undone.
           </p>
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteCompanyConfirm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
-            <button onClick={onDeleteCompany} className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg">Delete</button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: ".75rem" }}>
+            <button className="btn btn-ghost" onClick={() => setDeleteCompanyConfirm(false)}>Cancel</button>
+            <button className="btn btn-danger" onClick={onDeleteCompany}>Delete</button>
           </div>
         </Modal>
       )}
 
-      {/* Contact Modal */}
+      {/* Add / Edit Contact Modal */}
       {showContactModal && (
         <Modal title={editContact ? "Edit Contact" : "Add Contact"} onClose={() => setShowContactModal(false)}>
-          {formError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm mb-4">{formError}</div>
-          )}
-          <form onSubmit={contactForm.handleSubmit(onSubmitContact)} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-              <input
-                {...contactForm.register("full_name", { required: "Name is required" })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="John Doe"
-              />
-              {contactForm.formState.errors.full_name && (
-                <p className="text-red-500 text-xs mt-1">{contactForm.formState.errors.full_name.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input
-                type="email"
+          {formError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{formError}</div>}
+          <form onSubmit={contactForm.handleSubmit(onSubmitContact)}>
+            <FormField label="Full Name *" error={contactForm.formState.errors.full_name?.message}>
+              <input className="input" style={{ width: "100%" }} placeholder="John Doe" {...contactForm.register("full_name", { required: "Name is required" })} />
+            </FormField>
+            <FormField label="Email *" error={contactForm.formState.errors.email?.message}>
+              <input type="email" className="input" style={{ width: "100%" }} placeholder="john@example.com"
                 {...contactForm.register("email", {
                   required: "Email is required",
                   pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email format" },
                 })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="john@example.com"
               />
-              {contactForm.formState.errors.email && (
-                <p className="text-red-500 text-xs mt-1">{contactForm.formState.errors.email.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input
+            </FormField>
+            <FormField label="Phone (optional)" error={contactForm.formState.errors.phone?.message}>
+              <input className="input" style={{ width: "100%" }} placeholder="12345678"
                 {...contactForm.register("phone", {
-                  validate: (v) => !v || (/^\d{8,15}$/.test(v)) || "Phone must be 8-15 digits (numbers only)",
+                  validate: (v) => !v || /^\d{8,15}$/.test(v) || "Phone must be 8–15 digits",
                 })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="12345678"
               />
-              {contactForm.formState.errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{contactForm.formState.errors.phone.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select
-                {...contactForm.register("role")}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {CONTACT_ROLES.map((r) => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+            </FormField>
+            <FormField label="Role">
+              <select className="input" style={{ width: "100%" }} {...contactForm.register("role")}>
+                {CONTACT_ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
               </select>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setShowContactModal(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg">
-                {saving ? "Saving..." : editContact ? "Update" : "Add Contact"}
+            </FormField>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: ".75rem", paddingTop: ".5rem" }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setShowContactModal(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Saving…</> : editContact ? "Update" : "Add Contact"}
               </button>
             </div>
           </form>
@@ -467,15 +404,16 @@ export default function CompanyDetail() {
       {/* Delete Contact Modal */}
       {deleteContact && (
         <Modal title="Delete Contact" onClose={() => setDeleteContact(null)}>
-          <p className="text-gray-600 mb-6">
-            Delete <strong>{deleteContact.full_name}</strong>? This action cannot be undone.
+          <p style={{ color: "#64748b", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+            Delete contact <strong style={{ color: "#0f172a" }}>{deleteContact.full_name}</strong>? This action cannot be undone.
           </p>
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteContact(null)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
-            <button onClick={onDeleteContact} className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg">Delete</button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: ".75rem" }}>
+            <button className="btn btn-ghost" onClick={() => setDeleteContact(null)}>Cancel</button>
+            <button className="btn btn-danger" onClick={onDeleteContact}>Delete</button>
           </div>
         </Modal>
       )}
     </>
   );
 }
+
