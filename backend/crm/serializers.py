@@ -37,14 +37,18 @@ class CompanySerializer(serializers.ModelSerializer):
 
 
 class ContactSerializer(serializers.ModelSerializer):
+    company_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Contact
         fields = [
             "id", "full_name", "email", "phone", "role",
-            "company", "organization", "created_at"
+            "company", "company_name", "organization", "created_at"
         ]
         read_only_fields = ["organization", "created_at"]
+
+    def get_company_name(self, obj):
+        return obj.company.name if obj.company else None
 
     def validate_email(self, value):
         company_id = self.initial_data.get("company") or (

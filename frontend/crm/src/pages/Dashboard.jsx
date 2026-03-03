@@ -90,7 +90,7 @@ export default function Dashboard() {
             {/* Stat cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
               <StatCard title="Companies"     value={stats.companies} icon={STAT_ICONS.companies} accent="#4f46e5" to="/companies" />
-              <StatCard title="Contacts"      value={stats.contacts}  icon={STAT_ICONS.contacts}  accent="#0ea5e9" />
+              <StatCard title="Contacts"      value={stats.contacts}  icon={STAT_ICONS.contacts}  accent="#0ea5e9" to="/contacts" />
               <StatCard title="Activity Logs" value={stats.logs}      icon={STAT_ICONS.logs}      accent="#8b5cf6" to="/logs" />
             </div>
 

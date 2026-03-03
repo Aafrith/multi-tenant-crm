@@ -11,6 +11,7 @@ const ROLE_BADGE = {
 const NAV_ITEMS = [
   { to: "/",          label: "Dashboard",     icon: "⊞" },
   { to: "/companies", label: "Companies",     icon: "🏢" },
+  { to: "/contacts", label: "Contacts",      icon: "👥" },
   { to: "/logs",      label: "Activity Logs", icon: "📋" },
 ];
 

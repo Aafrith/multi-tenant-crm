@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import CompanyDetail from "./pages/CompanyDetail";
+import Contacts from "./pages/Contacts";
 import ActivityLogs from "./pages/ActivityLogs";
 
 import PrivateRoute from "./routes/PrivateRoute";
@@ -36,6 +37,15 @@ export default function App() {
         element={
           <PrivateRoute>
             <CompanyDetail />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/contacts"
+        element={
+          <PrivateRoute>
+            <Contacts />
           </PrivateRoute>
         }
       />
